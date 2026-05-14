@@ -149,8 +149,22 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
             }
 
             // Return total illumination
-            return L_dir + L_indir;
+            Vector3f hitColor = L_dir + L_indir;
 
+            // If the material has the texture
+            if (inter.material->diffuse_map != nullptr) {
+                float u = inter.tcoords.x;
+                float v = inter.tcoords.y;
+                
+                // Get the texture color based on uv coordinates
+                Vector3f tex_color = inter.material->diffuse_map->getColor(u, v);
+                
+                // hitColor * texture_color
+                hitColor = hitColor * tex_color; 
+            }
+
+            // Return the color with texture&illumination
+            return hitColor;
         }
 
         Vector3f diffuseColor = 0, specularColor = 0;

@@ -130,12 +130,16 @@ public:
                                      -std::numeric_limits<float>::infinity()};
         for (int i = 0; i < mesh.Vertices.size(); i += 3) {
             std::array<Vector3f, 3> face_vertices;
+            std::array<Vector2f, 3> face_tcoords; // storing u,v coordinates
 
             for (int j = 0; j < 3; j++) {
                 auto vert = Vector3f(mesh.Vertices[i + j].Position.X+offset.x,
                                      mesh.Vertices[i + j].Position.Y+offset.y,
                                      mesh.Vertices[i + j].Position.Z+offset.z);
                 face_vertices[j] = vert;
+                // Getting uv texture coordinates from .obj
+                face_tcoords[j] = Vector2f(mesh.Vertices[i + j].TextureCoordinate.X, 
+                                           mesh.Vertices[i + j].TextureCoordinate.Y);
 
                 min_vert = Vector3f(std::min(min_vert.x, vert.x),
                                     std::min(min_vert.y, vert.y),
@@ -147,6 +151,11 @@ public:
 
             triangles.emplace_back(face_vertices[0], face_vertices[1],
                                    face_vertices[2], mt);
+
+            // Setting the uv coordinates(t0, t1, t2)
+            triangles.back().t0 = face_tcoords[0];
+            triangles.back().t1 = face_tcoords[1];
+            triangles.back().t2 = face_tcoords[2];      
         }
 
         bounding_box = Bounds3(min_vert, max_vert);

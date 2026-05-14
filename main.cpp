@@ -40,11 +40,14 @@ int main(int argc, char** argv)
     scene.Add(&light_);
     scene.Add(&light_back);
 
-    // Add the rock mesh
-    scene.Add(new MeshTriangle("../models/rock/rock.obj", Vector3f(180, 0, 300),new Material(DIFFUSE, Vector3f(1))));
-    
-     // Mapping the texture on the rock
+    // Mapping the texture on the rock
+     Material* rock_mat = new Material(DIFFUSE, Vector3f(1.0f));
+    // jpg or png texture img adjust
+    rock_mat->diffuse_map = new Texture("../models/rock/initialShadingGroup_Base_Color.png"); 
 
+    // Add the rock mesh
+    scene.Add(new MeshTriangle("../models/rock/rock.obj", Vector3f(180, 0, 300),rock_mat));
+    
      // Add the diamond mesh with glass material
     scene.Add(new MeshTriangle("../models/diamond/diamond.obj", Vector3f(350, 0, 250), new Material(GLASS, Vector3f(1))));
 
