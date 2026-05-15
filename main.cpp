@@ -20,7 +20,6 @@ int main(int argc, char** argv)
     // Scene scene(1024, 1024);
 
     scene.RussianRoulette = 0.8;
-    scene.spp = 64;
     // scene.spp = 1;  
 
     Material* white = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
@@ -41,9 +40,12 @@ int main(int argc, char** argv)
     scene.Add(&light_back);
 
     // Mapping the texture on the rock
-     Material* rock_mat = new Material(DIFFUSE, Vector3f(1.0f));
-    // jpg or png texture img adjust
-    rock_mat->diffuse_map = new Texture("../models/rock/initialShadingGroup_Base_Color.png"); 
+    Material* rock_mat = new Material(DIFFUSE, Vector3f(1.0f));
+
+    rock_mat->diffuse_map = new Texture("../models/rock/initialShadingGroup_Base_Color.png"); // jpg or png texture img adjust
+
+    // Normal Mapping(Bump Shading)
+    rock_mat->normal_map = new Texture("../models/rock/rock_normals.jpg");
 
     // Add the rock mesh
     scene.Add(new MeshTriangle("../models/rock/rock.obj", Vector3f(180, 0, 300),rock_mat));

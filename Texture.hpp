@@ -13,11 +13,14 @@ private:
 public:
     Texture(const std::string& name)
     {
+        // Load image using OpenCV
         image_data = cv::imread(name);
         if (image_data.empty()) {
             std::cerr << "[OpenCV Error] Can't find the image: " << name << std::endl;
             exit(1);
         }
+
+        // Convert color space from BGR to RGB
         cv::cvtColor(image_data, image_data, cv::COLOR_RGB2BGR);
         width = image_data.cols;
         height = image_data.rows;
@@ -27,11 +30,11 @@ public:
 
     Vector3f getColor(float u, float v)
     {
-        // 1.clam the uv coordinates
+        // 1.clamp the uv coordinates to [0, 1] range to avoid out-of-bounds access
         u = std::clamp(u, 0.0f, 1.0f);
         v = std::clamp(v, 0.0f, 1.0f);
 
-        // 2. Use (width - 1), (height - 1) to prevent exceeding index
+        // 2. Map UV to pixel coordinates. Use (width - 1), (height - 1) to prevent exceeding index
         auto u_img = u * (width - 1);
         auto v_img = (1 - v) * (height - 1);
 

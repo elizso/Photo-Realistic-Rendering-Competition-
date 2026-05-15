@@ -56,6 +56,40 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     Vector3f N = inter.normal; // normal
     Vector2f st = inter.tcoords; // texture coordinates (u, v)
     Vector3f dir = ray.direction;  // ray direction
+    
+
+    // Apply Bump(Normal Mapping)
+    if (inter.material->normal_map != nullptr) {
+        float u = st.x;
+        float v = st.y;
+
+        // 1. Set up variables for TBN matrix calculation
+        Vector3f n = normalize(N);
+        float x = n.x, y = n.y, z = n.z;
+
+        Vector3f t, b;
+        float denominator = std::sqrt(x*x + z*z);
+        
+        // Prevent division by zero when the normal is perfectly vertical (x=0, z=0)
+        if (denominator < 1e-6f) { 
+            t = Vector3f(1.0f, 0.0f, 0.0f);
+        } else {
+            t = Vector3f(x*y/denominator, denominator, z*y/denominator);
+        }
+        b = crossProduct(n, t);
+
+        // 2. Fetch value from texture
+        // Since 'rock_normals.jpg' is a normal map with vector values in RGB,
+        // I directly map the colors to the [-1, 1] range instead of using derivatives (dU, dV))
+        Vector3f map_n = inter.material->normal_map->getColor(u, v);
+        Vector3f ln = Vector3f(map_n.x * 2.0f - 1.0f,
+                               map_n.y * 2.0f - 1.0f,
+                               map_n.z * 2.0f - 1.0f);
+        ln = normalize(ln);
+
+        // 3. Transform to world space normal using the TBN matrix and overwrite N
+        N = normalize(t * ln.x + b * ln.y + n * ln.z);
+    }
 
     if (inter.material->m_type == EMIT) {  // if the object is a light source
         return inter.material->m_emission;  // return light color

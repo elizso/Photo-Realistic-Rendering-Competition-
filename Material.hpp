@@ -96,7 +96,9 @@ public:
     float Kd, Ks;  // coefficient of diffuse and specular
     float specularExponent;
     bool textured;
+    
     Texture* diffuse_map = nullptr;
+    Texture* normal_map = nullptr;
 
     inline Material(MaterialType t=DIFFUSE, Vector3f e=Vector3f(0,0,0));
     inline MaterialType getType();
