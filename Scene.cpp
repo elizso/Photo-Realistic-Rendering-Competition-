@@ -94,7 +94,62 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     if (inter.material->m_type == EMIT) {  // if the object is a light source
         return inter.material->m_emission;  // return light color
 
-    } else if (inter.material->m_type == DIFFUSE ||
+    } else if (TASK_N == 2) {
+            // TODO: task 2 Monte Carlo Path Tracing with Russian Roulette termination
+            Vector3f Li = 1, Lo = 0, wi = ray.direction, curN = N, b1, b2;
+            Intersection curInter = inter;
+            for (int i = 0; i < maxDepth; i++){
+                if ((get_random_float() > RussianRoulette && i > 3) || !curInter.happened) break;
+                if (curInter.material->m_type == EMIT) {Lo += Li * curInter.material->m_emission; break;}
+                if (curInter.material -> m_type == MIRROR){
+                    wi = normalize(reflect(wi, curN)); 
+                    Li = Li * getColor(curInter);
+                    curInter = intersect(Ray(curInter.coords + curN * EPSILON, wi));
+                    if (!curInter.happened) {Lo += Li * backgroundColor; break;}
+                    curN = curInter.normal; continue;
+                }
+                else if (curInter.material -> m_type == GLASS) {
+                    float kr = fresnel(wi, curN, curInter.material->ior);
+                    Vector3f faceN = dotProduct(wi, curN) < 0 ? curN : -curN;
+                    wi = get_random_float() < kr ? normalize(reflect(wi, faceN)) : normalize(refract(wi, faceN, curInter.material->ior));
+                    curInter = intersect(Ray(curInter.coords + wi * EPSILON, wi));
+                    if (!curInter.happened) {Lo += Li * backgroundColor; break;}
+                    curN = curInter.normal; continue;
+                }
+                Intersection lightInter; float pdf;
+                sampleLight(lightInter, pdf);
+                Vector3f lightVec = lightInter.coords - curInter.coords, lightDir = normalize(lightVec);
+                float dist2 = dotProduct(lightVec, lightVec), cosLight = std::max(0.0f, dotProduct(lightInter.normal, -lightDir));
+
+                Vector3f offsetN = dotProduct(curN, lightDir) > 0 ? curN : -curN;
+                Ray shadowRay(curInter.coords + offsetN * EPSILON + lightDir * EPSILON, lightDir);
+                Intersection shadowInter = intersect(shadowRay);
+                bool notBlocked = !shadowInter.happened || shadowInter.material == nullptr || 
+                                shadowInter.tnear >= lightVec.norm() * 0.999f || shadowInter.material -> m_type == EMIT;
+                Li = Li * getColor(curInter);
+                if (notBlocked && pdf >= 1e-6) { 
+                    Vector3f lightIntensity = lightInter.material->m_emission;
+                    float cosine = std::max(0.0f, dotProduct(curN, lightDir));
+                    Vector3f contrib= Li * (float)M_PI * lightIntensity * cosine * cosLight / (pdf * dist2) / RussianRoulette;
+                    contrib.x = std::min(contrib.x, 5.0f), contrib.y = std::min(contrib.y, 5.0f), contrib.z = std::min(contrib.z, 5.0f);
+                    Lo += contrib;
+                } 
+                if (std::abs(curInter.normal.x) > 0.9f) b1 = normalize(Vector3f(0, 1, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(0, 1, 0)));
+                else b1 = normalize(Vector3f(1, 0, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(1, 0, 0))); 
+                b2 = crossProduct(curInter.normal, b1);
+                float r1 = get_random_float(), r2 = get_random_float();
+                float phi = 2 * M_PI * r2, sinTheta = std::sqrt(1 - r1 * r1);
+                Vector3f localDir = Vector3f(cos(phi) * sinTheta, sinTheta * sin(phi), r1);
+                wi = normalize(b1 * localDir.x + b2 * localDir.y + curInter.normal * localDir.z);
+                curInter = intersect(Ray(curInter.coords + curInter.normal * EPSILON, wi));
+                if (!curInter.happened) break; 
+                curN = curInter.normal; 
+            }
+        return Lo;
+
+    } 
+    
+    else if (inter.material->m_type == DIFFUSE ||
            ((inter.material->m_type == GLASS || inter.material->m_type == MIRROR) && TASK_N < 1.3f)) {
         
         // Flip the normal vector(N) when a camera ray hits the backface(inside of an object) 
@@ -102,103 +157,6 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
         Vector3f N_diffuse = N;
         if (dotProduct(dir, N_diffuse) > 0.0f) {
             N_diffuse = -N_diffuse;
-        }
-
-        if (TASK_N == 2) {
-            // TODO: task 2 Monte Carlo Path Tracing with Russian Roulette termination
-
-            // 1. Calculate Direct Illumination(light arriving directly from the light source)
-            Vector3f L_dir(0.0f);
-            Intersection lightInter;
-            float lightPdf = 0.0f;
-            
-            // Sample a random point on the area light
-            sampleLight(lightInter, lightPdf);
-            // Checks if the sampled point is mathematically valid
-            if (lightPdf > 1e-6f) {
-                Vector3f L = lightInter.coords - hitPoint;
-                float distToLight = L.norm();
-                Vector3f lightDir = normalize(L);
-                
-                // Cosine terms for the surface normal and light normal
-                float cos_theta = dotProduct(N_diffuse, lightDir);
-                float cos_theta_prime = dotProduct(lightInter.normal, -lightDir);
-
-                // Calculate only if the surface and the light are facing each other
-                if (cos_theta > 0.0f && cos_theta_prime > 0.0f) {
-                    // Apply an offset along the normal to prevent shadow acne (self-intersection)
-                    Vector3f shadowOrig = hitPoint + N_diffuse * EPSILON;
-                    Intersection shadowInter = intersect(Ray(shadowOrig, lightDir));
-                    float distToHit = (shadowInter.coords - shadowOrig).norm();
-
-                    // Add direct light if not occluded by another object
-                    if (shadowInter.happened && (distToHit > distToLight - 0.05f || shadowInter.material->m_type == EMIT)) {
-                        Vector3f f_r = inter.obj->evalDiffuseColor(st) / M_PI; // BRDF (Diffuse)
-                        Vector3f L_i = lightInter.material->m_emission;
-
-                        // Prevent the r^2(in 1/r^2) close to 0
-                        // when the ceiling too close to light
-                        float dist2 = std::max(distToLight * distToLight, 1.0f);
-                        
-                        // Apply rendering equation (includes geometric term for area light integration)
-                        L_dir = L_i * f_r * cos_theta * cos_theta_prime / (distToLight * distToLight * lightPdf);
-                    }
-                }
-            }
-
-            // 2. Calculate Indirect Illumination
-            Vector3f L_indir(0.0f);
-            float P_RR = RussianRoulette; // Russian Roulette survival probability
-            
-            // Decide whether to bounce using Russian Roulette
-            if (get_random_float() < P_RR) {
-                // Sample a random direction on the hemisphere
-                Vector3f wi = inter.material->sample(-dir, N_diffuse);
-                float pdf = inter.material->pdf(-dir, wi, N_diffuse);
-                
-                // Checks if the sampled point is mathematically valid
-                if (pdf > 1e-6f) {
-                    Vector3f bounceOrig = hitPoint + N_diffuse * EPSILON;
-                    Ray bounceRay(bounceOrig, wi);
-                    Intersection bounceInter = intersect(bounceRay);
-
-                    // Skip if the bounced ray hits the light source directly to avoid double counting
-                    if (bounceInter.happened && bounceInter.material->m_type != EMIT) {
-                        Vector3f f_r = inter.obj->evalDiffuseColor(st) / M_PI; // BRDF (Diffuse)
-                        float cos_theta_indir = std::max(0.0f, dotProduct(N_diffuse, wi));
-
-                        // Recursively call castRay to gather incoming light from the bounced direction
-                        Vector3f bounceColor = castRay(bounceRay, depth + 1);
-                        
-                        // To prevent the fireflies effect.
-                        // Clamp the spot with too much exposure of the light.
-                        bounceColor.x = clamp(0.0f, 1.0f, bounceColor.x);
-                        bounceColor.y = clamp(0.0f, 1.0f, bounceColor.y);
-                        bounceColor.z = clamp(0.0f, 1.0f, bounceColor.z);
-
-                        // Calculate the indirect light contribution
-                        L_indir = bounceColor * f_r * cos_theta_indir / (pdf * P_RR);
-                    }
-                }
-            }
-
-            // Return total illumination
-            Vector3f hitColor = L_dir + L_indir;
-
-            // If the material has the texture
-            if (inter.material->diffuse_map != nullptr) {
-                float u = inter.tcoords.x;
-                float v = inter.tcoords.y;
-                
-                // Get the texture color based on uv coordinates
-                Vector3f tex_color = inter.material->diffuse_map->getColor(u, v);
-                
-                // hitColor * texture_color
-                hitColor = hitColor * tex_color; 
-            }
-
-            // Return the color with texture&illumination
-            return hitColor;
         }
 
         Vector3f diffuseColor = 0, specularColor = 0;
