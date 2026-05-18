@@ -56,6 +56,11 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     Vector3f N = inter.normal; // normal
     Vector2f st = inter.tcoords; // texture coordinates (u, v)
     Vector3f dir = ray.direction;  // ray direction
+
+    auto getColor = [&](const Intersection& i) -> Vector3f {
+
+        return i.material->m_color;
+    };
     
 
     // Apply Bump(Normal Mapping)

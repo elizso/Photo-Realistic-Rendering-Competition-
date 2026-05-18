@@ -124,7 +124,7 @@ Material::Material(MaterialType t, Vector3f color){
     specularExponent=25;
     m_emission=0;
     textured=false;
-    ior=2;
+    ior=1.52;
 }
 
 MaterialType Material::getType(){return m_type;}

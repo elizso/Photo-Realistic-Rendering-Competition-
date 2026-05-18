@@ -20,11 +20,11 @@ int main(int argc, char** argv)
     // Scene scene(1024, 1024);
 
     scene.RussianRoulette = 0.8;
-    // scene.spp = 1;  
+    scene.spp = 256;  
 
     Material* white = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
     Material* light = new Material(EMIT, Vector3f(1));
-    light->m_emission=100;
+    light->m_emission=10;
     
     // Add the square floor mesh in the scene(But in the code, floor made by the c++ code.)
     // Add mirror in the scene
@@ -50,8 +50,10 @@ int main(int argc, char** argv)
     // Add the rock mesh
     scene.Add(new MeshTriangle("../models/rock/rock.obj", Vector3f(180, 0, 300),rock_mat));
     
+    Material* diamond_mat = new Material(GLASS, Vector3f(1));
+    diamond_mat->ior = 2.4;
      // Add the diamond mesh with glass material
-    scene.Add(new MeshTriangle("../models/diamond/diamond.obj", Vector3f(350, 0, 250), new Material(GLASS, Vector3f(1))));
+    scene.Add(new MeshTriangle("../models/diamond/diamond.obj", Vector3f(350, 0, 250), diamond_mat));
 
     // floor code
     Vector3f verts[4] = {{0,0,0}, {552.8,0,0}, {549.6, 0,559.2}, {0,0,559.2}};

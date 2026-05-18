@@ -21,7 +21,7 @@ public:
     double fov = 40; 
     // Vector3f backgroundColor = Vector3f(0.235294, 0.67451, 0.843137);
     Vector3f backgroundColor = Vector3f(0, 0, 0); // change the background color to black
-    int maxDepth = 5;
+    int maxDepth = 32;
     float RussianRoulette = 0.8;
 
 
