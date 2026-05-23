@@ -59,8 +59,9 @@ inline float deg2rad(float deg){
     return deg * M_PI / 180.0f;
 }
 
-inline Vector3f rotateVertex(Vector3f p, float rotX, float rotZ){
+inline Vector3f rotateVertex(Vector3f p, float rotX, float rotY, float rotZ){
     float rx = deg2rad(rotX);
+    float ry = deg2rad(rotY);
     float rz = deg2rad(rotZ);
 
     // rotate around X
@@ -69,8 +70,14 @@ inline Vector3f rotateVertex(Vector3f p, float rotX, float rotZ){
     p.y = y;
     p.z = z;
 
+    // rotate around y
+    float x = p.x * cos(ry) + p.z * sin(ry);
+    z = -p.x * sin(ry) + p.z * cos(ry);
+    p.x = x;
+    p.z = z;
+
     // roate around z
-    float x = p.x * cos(rz) - p.y * sin(rz);
+    x = p.x * cos(rz) - p.y * sin(rz);
     y = p.x * sin(rz) + p.y * cos(rz);
     p.x = x;
     p.y = y;
@@ -137,7 +144,7 @@ public:
     }
 
     // added float params to original OBJ loader
-    MeshTriangle(const std::string& filename, Vector3f offset, Material *mt = new Material(), float rotX = 0.0f, float rotZ = 0.0f)
+    MeshTriangle(const std::string& filename, Vector3f offset, Material *mt = new Material(), float rotX = 0.0f, float rotY = 0.0f, float rotZ = 0.0f)
     {
         objl::Loader loader;
         loader.LoadFile(filename);
@@ -161,7 +168,7 @@ public:
                                      mesh.Vertices[i + j].Position.Y,
                                      mesh.Vertices[i + j].Position.Z);
 
-                vert = rotateVertex(vert, rotX, rotZ);
+                vert = rotateVertex(vert, rotX, rotY, rotZ);
                 vert = vert + offset;
                 face_vertices[j] = vert;
                 // Getting uv texture coordinates from .obj
