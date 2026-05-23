@@ -5,6 +5,7 @@
 #include "Vector.hpp"
 #include "global.hpp"
 #include <chrono>
+#include <sstream>
 
 float TASK_N = 2; // 1.1, 1.2, 1.3, 2
 
@@ -40,53 +41,71 @@ int main(int argc, char** argv)
     // Interactive Set up
 
     std::cout << "Interactive render setup\n";
-    std::cout << "(Press Enter to keep default)\n\n";
+    std::cout << "(Press Enter to keep default. For 3D values, enter: x y z)\n\n";
 
     std::string input;
 
-    std::cout << "Samples per pixel [default " << spp << "] ";
+    auto readVec3 = [](const std::string& label, Vector3f& value) {
+        std::string input;
+
+        std::cout << label
+                << " [default "
+                << value.x << " "
+                << value.y << " "
+                << value.z << "]: ";
+
+        std::getline(std::cin, input);
+
+        if (!input.empty()) {
+            std::stringstream ss(input);
+            ss >> value.x >> value.y >> value.z;
+        }
+    };
+
+    auto readFloat3 = [](const std::string& label,
+                        float& x,
+                        float& y,
+                        float& z) {
+        std::string input;
+
+        std::cout << label
+                << " [default "
+                << x << " "
+                << y << " "
+                << z << "]: ";
+
+        std::getline(std::cin, input);
+
+        if (!input.empty()) {
+            std::stringstream ss(input);
+            ss >> x >> y >> z;
+        }
+    };
+
+    std::cout << "Samples per pixel [default " << spp << "]: ";
     std::getline(std::cin, input);
     if (!input.empty()) spp = std::stoi(input);
 
-    std::cout << "Diamond X [default " << diamondPos.x << "]: ";
-    std::getline(std::cin, input);
-    if (!input.empty()) diamondPos.x = std::stof(input);
+    readVec3("Diamond position x y z", diamondPos);
 
-    std::cout << "Diamond Y [default "<< diamondPos.y << "]: ";
-    std::getline(std::cin, input);
-    if (!input.empty()) diamondPos.y = std::stof(input);
-
-    std::cout << "Diamond Z [default " << diamondPos.z << "]: ";
-    std::getline(std::cin, input);
-    if (!input.empty()) diamondPos.z = std::stof(input);
-
-    std::cout << "Diamond rotation X [default "<< diamondRotX << "]: ";
-    std::getline(std::cin, input);
-    if (!input.empty()) diamondRotX = std::stof(input);
-
-    std::cout << "Diamond rotation Y [default " << diamondRotY << "]: ";
-    std::getline(std::cin, input);
-    if (!input.empty()) diamondRotY = std::stof(input);
-
-    std::cout << "Diamond rotation Z [default " << diamondRotZ << "]: ";
-    std::getline(std::cin, input);
-    if (!input.empty()) diamondRotZ = std::stof(input);
+    readFloat3("Diamond rotation x y z",
+            diamondRotX,
+            diamondRotY,
+            diamondRotZ);
 
     std::cout << "Number of lights [default " << numLights << "]: ";
     std::getline(std::cin, input);
     if (!input.empty()) numLights = std::stoi(input);
 
-    std::cout << "Main light X [default " << lightPos.x << "]: ";
-    std::getline(std::cin, input);
-    if (!input.empty()) lightPos.x = std::stof(input);
-    
-    std::cout << "Main light Y [default " << lightPos.y << "]: ";
-    std::getline(std::cin, input);
-    if (!input.empty()) lightPos.y = std::stof(input);
+    readVec3("Main light position x y z", lightPos);
 
-    std::cout << "Main light Z [default " << lightPos.z << "]: ";
+    readVec3("Camera position x y z", cameraPos);
+
+    readVec3("Camera look-at x y z", cameraLookAt);
+
+    std::cout << "Camera FOV [default " << cameraFov << "]: ";
     std::getline(std::cin, input);
-    if (!input.empty()) lightPos.z = std::stof(input);
+    if (!input.empty()) cameraFov = std::stof(input);
 
     // 3. Create a scene using params
     Scene scene(width, height);
