@@ -12,14 +12,14 @@ int main(int argc, char** argv)
 {
 
     // 1. Default parameters
-    int width = 512;
-    int height = 512;
-    int spp = 1024;
+    int width = 1024;
+    int height = 1024;
+    int spp = 256;
 
     // Vector3f cameraPos(278, 273, -800);
     Vector3f diamondPos(350, 0, 250);
     float diamondRotX = -12.0f;
-    float diamondRotZ = 30.0f;
+    float diamondRotZ = 35.0f;
     float diamondRotY = 180.0f;
 
     // bool enableShadows = true;
