@@ -73,3 +73,41 @@ inline Vector3f spectralToXYZ(float lambda, float radiance, float pdf){
     // 106.856895 is the normalization factor for the XYZ color matching functions
 
 }
+
+inline Vector3f wavelengthToRGB(float lambda_nm){
+    float hue = (700.f - lambda_nm) / 300.f * 240.f;
+    float h = hue / 60.f;
+    int   i = (int)h % 6;
+    float f = h - (float)(int)h;
+    Vector3f rgb;
+    switch (i) {
+        case 0: rgb = Vector3f(1.f, f,   0.f);  break;
+        case 1: rgb = Vector3f(1.f-f, 1.f, 0.f);break;
+        case 2: rgb = Vector3f(0.f, 1.f, f);    break;
+        case 3: rgb = Vector3f(0.f, 1.f-f, 1.f);break;
+        case 4: rgb = Vector3f(f,   0.f, 1.f);  break;
+        default: rgb = Vector3f(1.f, 0.f, 1.f-f);break;
+    }
+    rgb.x /= 0.375f;
+    rgb.y /= 0.750f;
+    rgb.z /= 0.375f;
+    // Clamp to prevent any channel exceeding 3.0
+    rgb.x = std::min(rgb.x, 3.0f);
+    rgb.y = std::min(rgb.y, 3.0f);
+    rgb.z = std::min(rgb.z, 3.0f);
+    return rgb;
+}
+
+inline Vector3f wavelengthToRGBGaussian(float lambda_nm) {
+    float r = expf(-0.5f * powf((lambda_nm - 650.f) / 50.f, 2.f));
+    float g = expf(-0.5f * powf((lambda_nm - 550.f) / 50.f, 2.f));
+    float b = expf(-0.5f * powf((lambda_nm - 450.f) / 50.f, 2.f));
+    // Always non-negative — no clamping needed
+    float sum = r + g + b; 
+    if (sum > 1e-4f) {
+        r /= sum;
+        g /= sum;
+        b /= sum;
+    }
+    return Vector3f(r, g, b);
+}

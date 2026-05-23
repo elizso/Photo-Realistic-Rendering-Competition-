@@ -51,6 +51,7 @@ void Renderer::Render(const Scene& scene)
                 framebuffer[m] = scene.castRay(Ray(eye_pos, dir), 0, sw);
                 
             }else {
+                // std::vector<Vector3f> xyzBuffer(scene.width * scene.height, Vector3f(0));
                 // TODO: task 2 multi-sampling (anti-aliasing)
                 // Shoot rays to random positions as many times as the configured Samples Per Pixel
                 for (int k = 0; k < scene.spp; ++k) {
@@ -64,8 +65,10 @@ void Renderer::Render(const Scene& scene)
                     // Use -x as the x-sign needs to be inverted depending on the coordinate system
                     Vector3f dir = normalize(Vector3f(-x, y, 1.0f));
                     // total color / Samples Per Pixel
-                    framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0, sw) / (float)scene.spp;
-                }    
+                    Vector3f Lo = scene.castRay(Ray(eye_pos, dir), 0, sw);
+                    framebuffer[m] += Lo / (float)scene.spp;
+                }
+
             }
         }
         progress += 1.0f / (float)scene.height;

@@ -110,7 +110,6 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
             Vector3f Li = 1, Lo = 0, wi = ray.direction, curN = N, b1, b2;
             Vector3f tint = 1;
             Intersection curInter = inter;
-            bool hasDispersed = false;
             for (int i = 0; i < maxDepth; i++){
                 if ((get_random_float() > RussianRoulette && i > 3) || !curInter.happened) break;
                 if (curInter.material->m_type == EMIT) {Lo += Li * curInter.material->m_emission; break;}
@@ -130,7 +129,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                     } else {
                         if (!sw.SecondaryTerminated()) {
                             sw.TerminateSecondary();
-                            Li = Li * XYZToRGB(wavelengthToXYZ(sw.lambda[0]));
+                            Li = Li * wavelengthToRGBGaussian(sw.lambda[0]);
                         }
                         wi = normalize(refract(wi, faceN, heroIOR));
                     }
@@ -154,7 +153,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                     float cosine = std::max(0.0f, dotProduct(curN, lightDir));
                     Vector3f contrib= Li * (float)M_PI * lightIntensity * cosine * cosLight / (pdf * dist2) / RussianRoulette;
                     contrib.x = std::min(contrib.x, 5.0f), contrib.y = std::min(contrib.y, 5.0f), contrib.z = std::min(contrib.z, 5.0f);
-                    Lo += hasDispersed ? contrib * tint : contrib;
+                    Lo += contrib;
                 } 
                 if (std::abs(curInter.normal.x) > 0.9f) b1 = normalize(Vector3f(0, 1, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(0, 1, 0)));
                 else b1 = normalize(Vector3f(1, 0, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(1, 0, 0))); 

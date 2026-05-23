@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 
     // param 6
     if (argc >= 6)
-        diamondPos = Vector3f(atof(argv[3], argv[4]), atof(argv[5]));
+        diamondPos = Vector3f(atof(argv[3]), atof(argv[4]), atof(argv[5]));
 
     // param 8
     if (argc >= 8) {
@@ -103,8 +103,7 @@ int main(int argc, char** argv)
 
     Material* white = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
     Material* light = new Material(EMIT, Vector3f(1));
-    light->m_emission=10;
-    
+    light->m_emission=10;    
     // Add the square floor mesh in the scene(But in the code, floor made by the c++ code.)
     // Add mirror in the scene
     // Mapping texture on the mirror
@@ -151,9 +150,9 @@ int main(int argc, char** argv)
      MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat);
      // Add inclination to diamond so it leans more naturally
      // lean backwards
-     diamond->rotate(Vector3f(1, 0, 0), diamondRotX);
+     //diamond->rotate(Vector3f(1, 0, 0), diamondRotX);
      // tip sideways
-     diamond->rotate(Vector3f(0, 0, 1), diamondRotZ);
+     //diamond->rotate(Vector3f(0, 0, 1), diamondRotZ);
      scene.Add(diamond);
 
     // floor code
