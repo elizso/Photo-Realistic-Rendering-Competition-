@@ -19,11 +19,15 @@ public:
     // setting up options
     int width = 1280;
     int height = 960;
-    double fov = 40; 
+    // double fov = 40; 
     // Vector3f backgroundColor = Vector3f(0.235294, 0.67451, 0.843137);
     Vector3f backgroundColor = Vector3f(0, 0, 0); // change the background color to black
     int maxDepth = 16;
     float RussianRoulette = 0.8;
+    // parametrising cameras
+    Vector3f cameraPos = Vector3f(278, 273, -800);
+    Vector3f cameraLookAt = Vector3f(278, 273, 0);
+    float fov = 40.0f;
 
 
     // change the spp value to change sample ammount

@@ -23,9 +23,18 @@ void Renderer::Render(const Scene& scene)
 {
     std::vector<Vector3f> framebuffer(scene.width * scene.height);
 
-    float scale = tan(deg2rad(scene.fov * 0.5));
+    // float scale = tan(deg2rad(scene.fov * 0.5));
+    // float imageAspectRatio = scene.width / (float)scene.height;
+    // Vector3f eye_pos(278, 273, -800);
+
+    float scale = tan(deg2rad(scene.fov * 0.5f));
     float imageAspectRatio = scene.width / (float)scene.height;
-    Vector3f eye_pos(278, 273, -800);
+    Vector3f eye_pos = scene.cameraPos;
+    Vector3f forward = normalize(scene.cameraLookAt - scene.cameraPos);
+    Vector3f worldUp(0, 1, 0);
+    Vector3f right = normalize(crossProduct(forward, worldUp));
+    Vector3f up = normalize(crossProduct(right, forward));
+    
 
     std::cout << "SPP: " << scene.spp << "\n";
 
@@ -44,7 +53,8 @@ void Renderer::Render(const Scene& scene)
 
                 // Set the ray direction to (x, y, 1) according to the instruction
                 // Use -x as the x-sign needs to be inverted depending on the coordinate system
-                Vector3f dir = normalize(Vector3f(-x, y, 1.0f));
+                // Vector3f dir = normalize(Vector3f(-x, y, 1.0f));
+                Vector3f dir = normalize(x * right + y * up + forward);
                 SampledWavelengths sw = SampledWavelengths::sample(get_random_float());
                 
                 // Cast the ray into the scene and store the returned color value in the framebuffer.
@@ -63,7 +73,8 @@ void Renderer::Render(const Scene& scene)
                     float y = (1.0f - 2.0f * (j + dy) / (float)scene.height) * scale;
                     // Set the ray direction to (x, y, 1) screen
                     // Use -x as the x-sign needs to be inverted depending on the coordinate system
-                    Vector3f dir = normalize(Vector3f(-x, y, 1.0f));
+                    // Vector3f dir = normalize(Vector3f(-x, y, 1.0f));
+                    Vector3f dir = normalize(x * right + y * up + forward);
                     // total color / Samples Per Pixel
                     Vector3f Lo = scene.castRay(Ray(eye_pos, dir), 0, sw);
                     framebuffer[m] += Lo / (float)scene.spp;

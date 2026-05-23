@@ -16,6 +16,10 @@ int main(int argc, char** argv)
     int height = 512;
     int spp = 256;
 
+    Vector3f cameraPos(278, 273, -800);
+    Vector3f cameraLookAt(278, 273, 0);
+    float cameraFov = 40.0f;
+
     // Vector3f cameraPos(278, 273, -800);
     Vector3f diamondPos(350, 0, 250);
     float diamondRotX = -12.0f;
@@ -79,7 +83,7 @@ int main(int argc, char** argv)
     std::cout << "Main light Y [default " << lightPos.y << "]: ";
     std::getline(std::cin, input);
     if (!input.empty()) lightPos.y = std::stof(input);
-    
+
     std::cout << "Main light Z [default " << lightPos.z << "]: ";
     std::getline(std::cin, input);
     if (!input.empty()) lightPos.z = std::stof(input);
@@ -100,6 +104,10 @@ int main(int argc, char** argv)
 
     // scene.RussianRoulette = 0.8;
     // scene.spp = 256;  
+
+    scene.cameraPos = cameraPos;
+    scene.cameraLookAt = cameraLookAt;
+    scene.fov = cameraFov;
 
     Material* white = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
     Material* light = new Material(EMIT, Vector3f(1));
