@@ -96,6 +96,9 @@ public:
     float Kd, Ks;  // coefficient of diffuse and specular
     float specularExponent;
     bool textured;
+    // default is glass 
+    float cauchyA = 1.458f;
+    float cauchyB = 0.00354f;
     
     Texture* diffuse_map = nullptr;
     Texture* normal_map = nullptr;
@@ -113,6 +116,9 @@ public:
     inline float pdf(const Vector3f &wi, const Vector3f &wo, const Vector3f &N);
     // given a ray direction and normal, calculate the contribution of this ray
     inline Vector3f eval(const Vector3f &dir, const Vector3f &N);
+    float iorAtLambda(float lambda_nm) const {
+        return cauchyA + cauchyB / (lambda_nm * lambda_nm * 1e-6f);
+    }
 
 };
 
@@ -189,5 +195,7 @@ Vector3f Material::eval(const Vector3f &dir, const Vector3f &N){
         }
     }
 }
+
+
 
 #endif //RAYTRACING_MATERIAL_H

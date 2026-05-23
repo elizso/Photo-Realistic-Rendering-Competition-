@@ -3,6 +3,7 @@
 //
 
 #include "Scene.hpp"
+#include "SpectralSample.hpp"
 
 
 void Scene::buildBVH() {
@@ -38,9 +39,8 @@ void Scene::sampleLight(Intersection &pos, float &pdf) const
     }
 }
 
-
 // Implementation of Path Tracing
-Vector3f Scene::castRay(const Ray &ray, int depth) const
+Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
 {   
     // Prevent infinite recursion
     // Stop tracing if depth exceeds maxDepth.
@@ -58,6 +58,12 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     Vector3f dir = ray.direction;  // ray direction
 
     auto getColor = [&](const Intersection& i) -> Vector3f {
+         if (i.material->textured){
+            float u, v;
+            u = i.tcoords.x;
+            v = i.tcoords.y;
+            return i.material->diffuse_map->getColor(u, v);
+        }
 
         return i.material->m_color;
     };
@@ -102,7 +108,9 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
     } else if (TASK_N == 2) {
             // TODO: task 2 Monte Carlo Path Tracing with Russian Roulette termination
             Vector3f Li = 1, Lo = 0, wi = ray.direction, curN = N, b1, b2;
+            Vector3f tint = 1;
             Intersection curInter = inter;
+            bool hasDispersed = false;
             for (int i = 0; i < maxDepth; i++){
                 if ((get_random_float() > RussianRoulette && i > 3) || !curInter.happened) break;
                 if (curInter.material->m_type == EMIT) {Lo += Li * curInter.material->m_emission; break;}
@@ -114,11 +122,20 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
                     curN = curInter.normal; continue;
                 }
                 else if (curInter.material -> m_type == GLASS) {
-                    float kr = fresnel(wi, curN, curInter.material->ior);
+                    float heroIOR = curInter.material->iorAtLambda(sw.lambda[0]);
+                    float kr = fresnel(wi, curN, heroIOR);
                     Vector3f faceN = dotProduct(wi, curN) < 0 ? curN : -curN;
-                    wi = get_random_float() < kr ? normalize(reflect(wi, faceN)) : normalize(refract(wi, faceN, curInter.material->ior));
+                    if (get_random_float() < kr){
+                        wi = normalize(reflect(wi, faceN));
+                    } else {
+                        if (!sw.SecondaryTerminated()) {
+                            sw.TerminateSecondary();
+                            Li = Li * XYZToRGB(wavelengthToXYZ(sw.lambda[0]));
+                        }
+                        wi = normalize(refract(wi, faceN, heroIOR));
+                    }
                     curInter = intersect(Ray(curInter.coords + wi * EPSILON, wi));
-                    if (!curInter.happened) {Lo += Li * backgroundColor; break;}
+                    if (!curInter.happened) { Lo += Li * backgroundColor; break; }
                     curN = curInter.normal; continue;
                 }
                 Intersection lightInter; float pdf;
@@ -137,7 +154,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
                     float cosine = std::max(0.0f, dotProduct(curN, lightDir));
                     Vector3f contrib= Li * (float)M_PI * lightIntensity * cosine * cosLight / (pdf * dist2) / RussianRoulette;
                     contrib.x = std::min(contrib.x, 5.0f), contrib.y = std::min(contrib.y, 5.0f), contrib.z = std::min(contrib.z, 5.0f);
-                    Lo += contrib;
+                    Lo += hasDispersed ? contrib * tint : contrib;
                 } 
                 if (std::abs(curInter.normal.x) > 0.9f) b1 = normalize(Vector3f(0, 1, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(0, 1, 0)));
                 else b1 = normalize(Vector3f(1, 0, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(1, 0, 0))); 
@@ -249,7 +266,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
 
         // Recursive call: ray is cast in the reflection direction to get the color of the reflected scene.
         // depth is increased by 1 to prevent an infinite loop.
-        reflectionColor = castRay(Ray(reflectionRayOrig, reflectionDir), depth + 1);
+        reflectionColor = castRay(Ray(reflectionRayOrig, reflectionDir), depth + 1, sw);
 
         // 3. Calculate refraction component
         // kr==1 means 100% of the light is reflected.
@@ -262,7 +279,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
             // Origin with offset is set for preventing "self-intersection" error
             Vector3f refractionRayOrig = (dotProduct(refractionDir, N) < 0) ? hitPoint - N * EPSILON : hitPoint + N * EPSILON;
             // ray is cast in the refraction direction to get the color of the scene visible through the glass
-            refractionColor = castRay(Ray(refractionRayOrig, refractionDir), depth + 1);
+            refractionColor = castRay(Ray(refractionRayOrig, refractionDir), depth + 1, sw);
         }
 
         // Return weighted sum of reflected and refracted light using Fresnel coefficient(reflection: kr, refraction: 1-kr)
@@ -278,7 +295,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth) const
         // 2. Apply the Origin Offset(EPSILON)
         Vector3f reflectionRayOrig = (dotProduct(reflectionDir, N) < 0) ? hitPoint - N * EPSILON : hitPoint + N * EPSILON;
         // Call castRay again in the reflected direction to get the color.
-        return castRay(Ray(reflectionRayOrig, reflectionDir), depth + 1);
+        return castRay(Ray(reflectionRayOrig, reflectionDir), depth + 1, sw);
     }
 
     return hitColor;

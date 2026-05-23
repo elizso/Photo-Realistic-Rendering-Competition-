@@ -20,7 +20,7 @@ if(OpenMP_CXX_FOUND)
 
     add_executable(RayTracing main.cpp Object.hpp Vector.cpp Vector.hpp Sphere.hpp global.hpp Triangle.hpp Scene.cpp
     Scene.hpp BVH.cpp BVH.hpp Bounds3.hpp Ray.hpp Material.hpp Intersection.hpp
-    Renderer.cpp Renderer.hpp)
+    Renderer.cpp Renderer.hpp SpectralSample.hpp)
 
     target_link_libraries(RayTracing PUBLIC OpenMP::OpenMP_CXX ${OpenCV_LIBS})
 
@@ -29,7 +29,7 @@ if(OpenMP_CXX_FOUND)
 else()
     add_executable(RayTracing main.cpp Object.hpp Vector.cpp Vector.hpp Sphere.hpp global.hpp Triangle.hpp Scene.cpp
     Scene.hpp BVH.cpp BVH.hpp Bounds3.hpp Ray.hpp Material.hpp Intersection.hpp
-    Renderer.cpp Renderer.hpp)
+    Renderer.cpp Renderer.hpp SpectralSample.hpp)
 
     target_link_libraries(RayTracing PUBLIC ${OpenCV_LIBS})
 

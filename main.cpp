@@ -16,11 +16,11 @@ int main(int argc, char** argv)
     // Scene scene(64, 64);
     // Scene scene(128, 128);
     // Scene scene(256, 256);
-    Scene scene(512, 512);
-    // Scene scene(1024, 1024);
+    // Scene scene(512, 512);
+    Scene scene(1024, 1024);
 
     scene.RussianRoulette = 0.8;
-    scene.spp = 256;  
+    scene.spp = 256;  //can push up to 1024+ 
 
     Material* white = new Material(DIFFUSE, Vector3f(0.48f, 0.45f, 0.4f));
     Material* light = new Material(EMIT, Vector3f(1));
@@ -47,11 +47,15 @@ int main(int argc, char** argv)
     // Normal Mapping(Bump Shading)
     rock_mat->normal_map = new Texture("../models/rock/rock_normals.jpg");
 
+    rock_mat->textured = true;
+
     // Add the rock mesh
     scene.Add(new MeshTriangle("../models/rock/rock.obj", Vector3f(180, 0, 300),rock_mat));
     
     Material* diamond_mat = new Material(GLASS, Vector3f(1));
     diamond_mat->ior = 2.4;
+    diamond_mat->cauchyA = 2.3849f;
+    diamond_mat->cauchyB = 0.01942f;
      // Add the diamond mesh with glass material
     scene.Add(new MeshTriangle("../models/diamond/diamond.obj", Vector3f(350, 0, 250), diamond_mat));
 

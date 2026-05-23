@@ -45,14 +45,16 @@ void Renderer::Render(const Scene& scene)
                 // Set the ray direction to (x, y, 1) according to the instruction
                 // Use -x as the x-sign needs to be inverted depending on the coordinate system
                 Vector3f dir = normalize(Vector3f(-x, y, 1.0f));
+                SampledWavelengths sw = SampledWavelengths::sample(get_random_float());
                 
                 // Cast the ray into the scene and store the returned color value in the framebuffer.
-                framebuffer[m] = scene.castRay(Ray(eye_pos, dir), 0);
+                framebuffer[m] = scene.castRay(Ray(eye_pos, dir), 0, sw);
                 
             }else {
                 // TODO: task 2 multi-sampling (anti-aliasing)
                 // Shoot rays to random positions as many times as the configured Samples Per Pixel
                 for (int k = 0; k < scene.spp; ++k) {
+                    SampledWavelengths sw = SampledWavelengths::sample(get_random_float());
                     float dx = get_random_float(); // Random number (0-1)
                     float dy = get_random_float(); // Random number (0-1)
                     // Change pixel coordinate -> 3D coordinate    
@@ -62,7 +64,7 @@ void Renderer::Render(const Scene& scene)
                     // Use -x as the x-sign needs to be inverted depending on the coordinate system
                     Vector3f dir = normalize(Vector3f(-x, y, 1.0f));
                     // total color / Samples Per Pixel
-                    framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0) / (float)scene.spp;
+                    framebuffer[m] += scene.castRay(Ray(eye_pos, dir), 0, sw) / (float)scene.spp;
                 }    
             }
         }

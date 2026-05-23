@@ -10,6 +10,7 @@
 #include "PointLight.hpp"
 #include "BVH.hpp"
 #include "Ray.hpp"
+#include "SpectralSample.hpp"
 
 
 class Scene
@@ -21,7 +22,7 @@ public:
     double fov = 40; 
     // Vector3f backgroundColor = Vector3f(0.235294, 0.67451, 0.843137);
     Vector3f backgroundColor = Vector3f(0, 0, 0); // change the background color to black
-    int maxDepth = 32;
+    int maxDepth = 16;
     float RussianRoulette = 0.8;
 
 
@@ -38,10 +39,9 @@ public:
     Intersection intersect(const Ray& ray) const;
     BVHAccel *bvh;
     void buildBVH();
-    Vector3f castRay(const Ray &ray, int depth) const;
+    Vector3f castRay(const Ray &ray, int depth, SampledWavelengths &sw) const;
     void sampleLight(Intersection &pos, float &pdf) const;
     bool trace(const Ray &ray, const std::vector<Object*> &objects, float &tNear, uint32_t &index, Object **hitObject);
-
     // creating the scene (adding objects and lights)
     std::vector<Object* > objects;
 
