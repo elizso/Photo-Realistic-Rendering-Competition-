@@ -43,13 +43,14 @@ int main(int argc, char** argv)
     // argv[4] = diamond y
     // argv[5] = diamond z
     // argv[6] = diamond rotation x
-    // argv[7] = diamond rotation z
-    // argv[8] = number of lights
-    // argv[9] = main light x
-    // argv[10] = main light y
-    // argv[11] = main light z
-    // argv[12] = rock texture path, optional
-    // argv[13] = rock normal map path, optional
+    // argv[7] = diamond rotation y
+    // argv[8] = diamond rotation z
+    // argv[9] = number of lights
+    // argv[10] = main light x
+    // argv[11] = main light y
+    // argv[12] = main light z
+    // argv[13] = rock texture path, optional
+    // argv[14] = rock normal map path, optional
 
     // param 1
     if (argc >= 2)
@@ -63,27 +64,28 @@ int main(int argc, char** argv)
     if (argc >= 6)
         diamondPos = Vector3f(atof(argv[3]), atof(argv[4]), atof(argv[5]));
 
-    // param 8
-    if (argc >= 8) {
+    // param 9
+    if (argc >= 9) {
         diamondRotX = atof(argv[6]);
-        diamondRotZ = atof(argv[7]);
+        diamondRotY = atof(argv[7]);
+        diamondRotZ = atof(argv[8]);
     }
 
-    // param 9
-    if (argc >= 9)
-        numLights = atoi(argv[8]);
-
-    // param 12
-    if (argc >= 12)
-        lightPos = Vector3f(atof(argv[9]), atof(argv[10]), atof(argv[11]));
+    // param 10
+    if (argc >= 10)
+        numLights = atoi(argv[9]);
 
     // param 13
     if (argc >= 13)
-        rockTexturePath = argv[12];
+        lightPos = Vector3f(atof(argv[10]), atof(argv[11]), atof(argv[12]));
 
     // param 14
     if (argc >= 14)
-        rockNormalPath = argv[13];
+        rockTexturePath = argv[13];
+
+    // param 15
+    if (argc >= 15)
+        rockNormalPath = argv[14];
 
     // 3. Create a scene using params
     Scene scene(width, height);
@@ -148,8 +150,7 @@ int main(int argc, char** argv)
     diamond_mat->cauchyA = 2.3849f;
     diamond_mat->cauchyB = 0.01942f;
      //diamond mesh with glass material
-
-     MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat, diamondRotX, diamondRotZ);
+     MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat, diamondRotX, diamondRotY, diamondRotZ);
      scene.Add(diamond);
 
     // floor code
