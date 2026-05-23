@@ -33,59 +33,56 @@ int main(int argc, char** argv)
 
     std::string envMap = "none";
 
-    // 2. Override defaults from cmd
-    // Example:
-    // ./Render 2 256 350 0 250 -12 18 2 0 -5 0
-    //
-    // argv[1] = TASK_N
-    // argv[2] = spp
-    // argv[3] = diamond x
-    // argv[4] = diamond y
-    // argv[5] = diamond z
-    // argv[6] = diamond rotation x
-    // argv[7] = diamond rotation y
-    // argv[8] = diamond rotation z
-    // argv[9] = number of lights
-    // argv[10] = main light x
-    // argv[11] = main light y
-    // argv[12] = main light z
-    // argv[13] = rock texture path, optional
-    // argv[14] = rock normal map path, optional
+    // Interactive Set up
 
-    // param 1
-    if (argc >= 2)
-        TASK_N=(float)atof(argv[1]);
+    std::cout << "Interactive render setup\n";
+    std::cout << "(Press Enter to keep default)\n\n";
 
-    // param 2
-    if (argc >= 3) 
-        spp = atoi(argv[2]);
+    std::string input;
 
-    // param 6
-    if (argc >= 6)
-        diamondPos = Vector3f(atof(argv[3]), atof(argv[4]), atof(argv[5]));
+    std::cout << "Samples per pixel [default " << spp << "] ";
+    std::getline(std::cin, input);
+    if (!input.empty()) spp = std::stoi(input);
 
-    // param 9
-    if (argc >= 9) {
-        diamondRotX = atof(argv[6]);
-        diamondRotY = atof(argv[7]);
-        diamondRotZ = atof(argv[8]);
-    }
+    std::cout << "Diamond X [default " << diamondPos.x << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) diamondPos.x = std::stof(input);
 
-    // param 10
-    if (argc >= 10)
-        numLights = atoi(argv[9]);
+    std::cout << "Diamond Y [default "<< diamondPos.y << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) diamondPos.y = std::stof(input);
 
-    // param 13
-    if (argc >= 13)
-        lightPos = Vector3f(atof(argv[10]), atof(argv[11]), atof(argv[12]));
+    std::cout << "Diamond Z [default " << diamondPos.z << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) diamondPos.z = std::stof(input);
 
-    // param 14
-    if (argc >= 14)
-        rockTexturePath = argv[13];
+    std::cout << "Diamond rotation X [default "<< diamondRotX << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) diamondRotX = std::stof(input);
 
-    // param 15
-    if (argc >= 15)
-        rockNormalPath = argv[14];
+    std::cout << "Diamond rotation Y [default " << diamondRotY << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) diamondRotY = std::stof(input);
+
+    std::cout << "Diamond rotation Z [default " << diamondRotZ << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) diamondRotZ = std::stof(input);
+
+    std::cout << "Number of lights [default " << numLights << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) numLights = std::stoi(input);
+
+    std::cout << "Main light X [default " << lightPos.x << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) lightPos.x = std::stof(input);
+    
+    std::cout << "Main light Y [default " << lightPos.y << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) lightPos.y = std::stof(input);
+    
+    std::cout << "Main light Z [default " << lightPos.z << "]: ";
+    std::getline(std::cin, input);
+    if (!input.empty()) lightPos.z = std::stof(input);
 
     // 3. Create a scene using params
     Scene scene(width, height);
