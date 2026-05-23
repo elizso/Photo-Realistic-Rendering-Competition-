@@ -69,6 +69,12 @@ inline Vector3f rotateVertex(Vector3f p, float rotX, float rotZ){
     p.y = y;
     p.z = z;
 
+    // roate around z
+    float x = p.x * cos(rz) - p.y * sin(rz);
+    y = p.x * sin(rz) + p.y * cos(rz);
+    p.x = x;
+    p.y = y;
+
     return p;
 }
 
@@ -151,9 +157,9 @@ public:
             std::array<Vector2f, 3> face_tcoords; // storing u,v coordinates
 
             for (int j = 0; j < 3; j++) {
-                auto vert = Vector3f(mesh.Vertices[i + j].Position.X+offset.x,
-                                     mesh.Vertices[i + j].Position.Y+offset.y,
-                                     mesh.Vertices[i + j].Position.Z+offset.z);
+                auto vert = Vector3f(mesh.Vertices[i + j].Position.X,
+                                     mesh.Vertices[i + j].Position.Y,
+                                     mesh.Vertices[i + j].Position.Z);
 
                 vert = rotateVertex(vert, rotX, rotZ);
                 vert = vert + offset;
