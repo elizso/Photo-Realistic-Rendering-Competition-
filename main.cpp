@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     Vector3f lightBackPos(0, -5, -500);
     // float lightSize = 1.0f;
 
-    std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";
+    std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";;
     std::string rockNormalPath = "../models/rock/rock_normals.jpg";
 
     std::string envMap = "none";
@@ -60,6 +60,7 @@ int main(int argc, char** argv)
 
     // param 6
     if (argc >= 6)
+        diamondPos = Vector3f(atof(argv[3]), atof(argv[4]), atof(argv[5]));
         diamondPos = Vector3f(atof(argv[3]), atof(argv[4]), atof(argv[5]));
 
     // param 8
@@ -147,12 +148,7 @@ int main(int argc, char** argv)
     diamond_mat->cauchyA = 2.3849f;
     diamond_mat->cauchyB = 0.01942f;
      //diamond mesh with glass material
-     MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat);
-     // Add inclination to diamond so it leans more naturally
-     // lean backwards
-     //diamond->rotate(Vector3f(1, 0, 0), diamondRotX);
-     // tip sideways
-     //diamond->rotate(Vector3f(0, 0, 1), diamondRotZ);
+     MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat, diamondRotX, diamondRotZ);
      scene.Add(diamond);
 
     // floor code
