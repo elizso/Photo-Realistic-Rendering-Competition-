@@ -55,6 +55,23 @@ public:
     }
 };
 
+inline float deg2rad(float deg){
+    return deg * M_PI / 180.0f;
+}
+
+inline Vector3f rotateVertex(Vector3f p, float rotX, float rotZ){
+    float rx = deg2rad(rotX);
+    float rz = deg2rad(rotZ);
+
+    // rotate around X
+    float y = p.y * cos(rx) - p.z * sin(rx);
+    float z = p.y * sin(rx) + p.z * cos(rx);
+    p.y = y;
+    p.z = z;
+
+    return p;
+}
+
 class MeshTriangle : public Object
 {
 public:
@@ -113,7 +130,8 @@ public:
         bvh = new BVHAccel(ptrs);
     }
 
-    MeshTriangle(const std::string& filename, Vector3f offset, Material *mt = new Material())
+    // added float params to original OBJ loader
+    MeshTriangle(const std::string& filename, Vector3f offset, Material *mt = new Material(), float rotX = 0.0f, float rotZ = 0.0f)
     {
         objl::Loader loader;
         loader.LoadFile(filename);
@@ -136,6 +154,9 @@ public:
                 auto vert = Vector3f(mesh.Vertices[i + j].Position.X+offset.x,
                                      mesh.Vertices[i + j].Position.Y+offset.y,
                                      mesh.Vertices[i + j].Position.Z+offset.z);
+
+                vert = rotateVertex(vert, rotX, rotZ);
+                vert = vert + offset;
                 face_vertices[j] = vert;
                 // Getting uv texture coordinates from .obj
                 face_tcoords[j] = Vector2f(mesh.Vertices[i + j].TextureCoordinate.X, 
