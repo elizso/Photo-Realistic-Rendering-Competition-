@@ -109,5 +109,16 @@ inline Vector3f wavelengthToRGBGaussian(float lambda_nm) {
         g /= sum;
         b /= sum;
     }
+
+    float lum = 0.2126f * r + 0.7152f * g + 0.0722f * b;
+    if (lum > 1e-4f) {
+        r /= lum;
+        g /= lum;
+        b /= lum;
+    }
+
+    r = std::min(r, 5.0f);
+    g = std::min(g, 5.0f);
+    b = std::min(b, 5.0f);
     return Vector3f(r, g, b);
 }

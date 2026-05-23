@@ -14,12 +14,13 @@ int main(int argc, char** argv)
     // 1. Default parameters
     int width = 512;
     int height = 512;
-    int spp = 256;
+    int spp = 1024;
 
     // Vector3f cameraPos(278, 273, -800);
     Vector3f diamondPos(350, 0, 250);
     float diamondRotX = -12.0f;
-    float diamondRotZ = 18.0f;
+    float diamondRotZ = 30.0f;
+    float diamondRotY = 180.0f;
 
     // bool enableShadows = true;
     int numLights = 2;
@@ -27,7 +28,7 @@ int main(int argc, char** argv)
     Vector3f lightBackPos(0, -5, -500);
     // float lightSize = 1.0f;
 
-    std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";;
+    std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";
     std::string rockNormalPath = "../models/rock/rock_normals.jpg";
 
     std::string envMap = "none";
@@ -60,7 +61,6 @@ int main(int argc, char** argv)
 
     // param 6
     if (argc >= 6)
-        diamondPos = Vector3f(atof(argv[3]), atof(argv[4]), atof(argv[5]));
         diamondPos = Vector3f(atof(argv[3]), atof(argv[4]), atof(argv[5]));
 
     // param 8
@@ -148,6 +148,7 @@ int main(int argc, char** argv)
     diamond_mat->cauchyA = 2.3849f;
     diamond_mat->cauchyB = 0.01942f;
      //diamond mesh with glass material
+
      MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat, diamondRotX, diamondRotZ);
      scene.Add(diamond);
 
