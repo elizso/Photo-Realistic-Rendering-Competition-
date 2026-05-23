@@ -18,8 +18,8 @@ int main(int argc, char** argv)
 
     // Vector3f cameraPos(278, 273, -800);
     Vector3f diamondPos(350, 0, 250);
-    float diamondRotX = -12.0f;
-    float diamondRotZ = 18.0f;
+    float diamondRotX = 0.0f;
+    float diamondRotZ = 0.0f;
 
     // bool enableShadows = true;
     int numLights = 2;
@@ -27,7 +27,7 @@ int main(int argc, char** argv)
     Vector3f lightBackPos(0, -5, -500);
     // float lightSize = 1.0f;
 
-    std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png"
+    std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";
     std::string rockNormalPath = "../models/rock/rock_normals.jpg";
 
     std::string envMap = "none";
@@ -60,7 +60,7 @@ int main(int argc, char** argv)
 
     // param 6
     if (argc >= 6)
-        diamondPos = Vector3f(atof(argv[3], argv[4]), atof(argv[5]));
+        diamondPos = Vector3f(atof(argv[3]), atof(argv[4]), atof(argv[5]));
 
     // param 8
     if (argc >= 8) {
@@ -144,12 +144,7 @@ int main(int argc, char** argv)
     Material* diamond_mat = new Material(GLASS, Vector3f(1));
     diamond_mat->ior = 2.4;
      //diamond mesh with glass material
-     MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat);
-     // Add inclination to diamond so it leans more naturally
-     // lean backwards
-     diamond->rotate(Vector3f(1, 0, 0), diamondRotX);
-     // tip sideways
-     diamond->rotate(Vector3f(0, 0, 1), diamondRotZ);
+     MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat, diamondRotX, diamondRotZ);
      scene.Add(diamond);
 
     // floor code
