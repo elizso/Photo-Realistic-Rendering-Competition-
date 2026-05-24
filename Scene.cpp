@@ -172,7 +172,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                             caustic   += ph->power * w;
                         }
                         // Scale by 1/area and surface BRDF
-                        caustic = caustic * getColor(curInter) / area;
+                        caustic = caustic * getColor(curInter) / area * 3.f;
                         caustic.x = std::min(caustic.x, 10.f);
                         caustic.y = std::min(caustic.y, 10.f);
                         caustic.z = std::min(caustic.z, 10.f);
