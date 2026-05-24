@@ -13,8 +13,8 @@ int main(int argc, char** argv)
 {
 
     // 1. Default parameters
-    int width = 1024;
-    int height = 1024;
+    int width = 512;
+    int height = 512;
     int spp = 256;
 
     Vector3f cameraPos(278, 273, -800);
@@ -148,6 +148,7 @@ int main(int argc, char** argv)
     }
 
 
+
     // MeshTriangle light_("../models/light/light.obj",Vector3f(0,-5,0), light);
     // MeshTriangle light_back("../models/light/light.obj", Vector3f(0, -5, -500), light);
 
@@ -187,6 +188,7 @@ int main(int argc, char** argv)
     scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
 
     scene.buildBVH();
+    scene.buildPhotonMap(500000);
 
     Renderer r;
 

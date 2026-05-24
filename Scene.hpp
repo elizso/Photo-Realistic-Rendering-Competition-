@@ -11,6 +11,7 @@
 #include "BVH.hpp"
 #include "Ray.hpp"
 #include "SpectralSample.hpp"
+#include "PhotonMap.hpp"
 
 
 class Scene
@@ -21,13 +22,16 @@ public:
     int height = 960;
     // double fov = 40; 
     // Vector3f backgroundColor = Vector3f(0.235294, 0.67451, 0.843137);
-    Vector3f backgroundColor = Vector3f(0.55f, 0.55f, 0.6f); // change the background color to black
+    Vector3f backgroundColor = Vector3f(0, 0, 0); // change the background color to black
     int maxDepth = 16;
     float RussianRoulette = 0.8;
     // parametrising cameras
     Vector3f cameraPos = Vector3f(278, 273, -800);
     Vector3f cameraLookAt = Vector3f(278, 273, 0);
     float fov = 40.0f;
+
+    PhotonMap causticMap;
+    void buildPhotonMap(int numPhotons); 
 
 
     // change the spp value to change sample ammount
