@@ -13,9 +13,9 @@ int main(int argc, char** argv)
 {
 
     // 1. Default parameters
-    int width = 512;
-    int height = 512;
-    int spp = 256;
+    int width = 1024;
+    int height = 1024;
+    int spp = 1024;
 
     Vector3f cameraPos(278, 273, -800);
     Vector3f cameraLookAt(278, 273, 0);
@@ -135,8 +135,11 @@ int main(int argc, char** argv)
     // Add mirror in the scene
     // Mapping texture on the mirror
     Material* mirrorMat = new Material(MIRROR, Vector3f(1.0f));
+    Material* glintFloor = new Material(GLINT, Vector3f(0.9f));
+    glintFloor -> textured = false;
+    glintFloor -> roughness = 0.008f;
     // Add temporary light.obj(You can change the light source location as you wish!)
-    MeshTriangle floor("../models/floor/floor.obj", Vector3f(0), white); 
+    //MeshTriangle floor("../models/floor/floor.obj", Vector3f(0), white); 
     MeshTriangle mirror("../models/mirror/mirror.obj",Vector3f(278, 0, 540), mirrorMat);
     // Lights (experimental)
     if (numLights >= 1){
@@ -152,7 +155,7 @@ int main(int argc, char** argv)
     // MeshTriangle light_("../models/light/light.obj",Vector3f(0,-5,0), light);
     // MeshTriangle light_back("../models/light/light.obj", Vector3f(0, -5, -500), light);
 
-    scene.Add(&floor);
+    //scene.Add(&floor);
     scene.Add(&mirror);
     // scene.Add(&light_);
     // scene.Add(&light_back);
@@ -178,14 +181,14 @@ int main(int argc, char** argv)
      MeshTriangle* diamond = new MeshTriangle("../models/diamond/diamond.obj", diamondPos, diamond_mat, diamondRotX, diamondRotY, diamondRotZ);
      scene.Add(diamond);
 
-    // floor code
+    //floor code
     Vector3f verts[4] = {{0,0,0}, {552.8,0,0}, {549.6, 0,559.2}, {0,0,559.2}};
     Vector2f st[4] = {{0, 0}, {1, 0}, {1, 1}, {0, 1}};
     uint32_t vertIndex[6] = {0, 2, 1, 2,0,3};
     Material* mfloor=new Material(DIFFUSE, Vector3f(1));
     // No texture for floor
     mfloor->textured=false;
-    scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
+    scene.Add(new MeshTriangle(verts, vertIndex, 2,st,glintFloor));
 
     scene.buildBVH();
     scene.buildPhotonMap(500000);

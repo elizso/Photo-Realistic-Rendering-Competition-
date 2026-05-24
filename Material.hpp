@@ -7,8 +7,37 @@
 
 #include "Texture.hpp"
 #include "Vector.hpp"
+#include "SpectralSample.hpp"
 
-enum MaterialType { DIFFUSE, GLASS, MIRROR, EMIT};
+enum MaterialType { DIFFUSE, GLASS, MIRROR, EMIT, GLINT};
+
+
+inline float fract(float x) { return x - std::floor(x); }
+
+inline float GGX(const Vector3f& H, const Vector3f& N, float roughness) {
+    float a  = roughness * roughness;
+    float a2 = a * a;
+    float NdotH  = std::max(0.f, dotProduct(N, H));
+    float NdotH2 = NdotH * NdotH;
+    float denom  = NdotH2 * (a2 - 1.f) + 1.f;
+    return a2 / (M_PI * denom * denom);
+}
+
+inline float smithG1(const Vector3f& v, const Vector3f& N, float roughness) {
+    float a    = roughness * roughness;
+    float NdotV = std::max(0.f, dotProduct(N, v));
+    float denom = NdotV + std::sqrt(a*a + (1.f - a*a) * NdotV * NdotV);
+    return 2.f * NdotV / denom;
+}
+
+inline float smithG(const Vector3f& wo, const Vector3f& wi,
+                    const Vector3f& N,  float roughness) {
+    return smithG1(wo, N, roughness) * smithG1(wi, N, roughness);
+}
+
+inline float fresnelSchlick(float cosTheta, float F0) {
+    return F0 + (1.f - F0) * std::pow(1.f - cosTheta, 5.f);
+}
 
 class Material{
 private:
@@ -99,6 +128,7 @@ public:
     // default is glass 
     float cauchyA = 1.458f;
     float cauchyB = 0.00354f;
+    float roughness;
     
     Texture* diffuse_map = nullptr;
     Texture* normal_map = nullptr;
@@ -118,6 +148,36 @@ public:
     inline Vector3f eval(const Vector3f &dir, const Vector3f &N);
     float iorAtLambda(float lambda_nm) const {
         return cauchyA + cauchyB / (lambda_nm * lambda_nm * 1e-6f);
+    }
+
+    
+
+    // In Material.hpp — add glint evaluation
+    Vector3f evalGlint(const Vector3f& wo,
+                   const Vector3f& wi,
+                   const Vector3f& N,
+                   const Vector2f& uv,
+                   const Vector3f& worldPos,
+                   float rough) const {
+
+        float patchSize = 2.f;
+        float seed = std::floor(worldPos.x / patchSize) * 73856093.f
+                + std::floor(worldPos.z / patchSize) * 19349663.f;
+        float r1 = fract(std::sin(seed)        * 43758.5453f);
+        float r2 = fract(std::cos(seed * 1.7f) * 12345.6789f);
+
+        if (r1 > 0.3f) return Vector3f(0.f);
+
+        float lambda   = 400.f + r2 * 300.f;
+        Vector3f color = wavelengthToRGBGaussian(lambda) * 10.f;
+
+        Vector3f H      = normalize(wo + wi);
+        float NdotH     = std::max(0.f, dotProduct(N, H));
+        float highlight = std::pow(NdotH, 20.f);  // very broad — fires most of floor
+
+        if (highlight < 0.05f) return Vector3f(0.f);
+
+        return color * highlight;
     }
 
 };
@@ -195,6 +255,8 @@ Vector3f Material::eval(const Vector3f &dir, const Vector3f &N){
         }
     }
 }
+
+
 
 
 

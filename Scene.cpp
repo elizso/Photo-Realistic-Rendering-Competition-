@@ -137,6 +137,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                     if (!curInter.happened) { Lo += Li * backgroundColor; break; }
                     curN = curInter.normal; continue;
                 }
+            
                 Intersection lightInter; float pdf;
                 sampleLight(lightInter, pdf);
                 Vector3f lightVec = lightInter.coords - curInter.coords, lightDir = normalize(lightVec);
@@ -147,14 +148,34 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                 Intersection shadowInter = intersect(shadowRay);
                 bool notBlocked = !shadowInter.happened || shadowInter.material == nullptr || 
                                 shadowInter.tnear >= lightVec.norm() * 0.999f || shadowInter.material -> m_type == EMIT;
+
                 Li = Li * getColor(curInter);
+                
                 if (notBlocked && pdf >= 1e-6) { 
                     Vector3f lightIntensity = lightInter.material->m_emission;
                     float cosine = std::max(0.0f, dotProduct(curN, lightDir));
                     Vector3f contrib= Li * (float)M_PI * lightIntensity * cosine * cosLight / (pdf * dist2) / RussianRoulette;
                     contrib.x = std::min(contrib.x, 5.0f), contrib.y = std::min(contrib.y, 5.0f), contrib.z = std::min(contrib.z, 5.0f);
                     Lo += contrib;
+
+                    if (curInter.material->m_type == GLINT) {
+                        Vector3f wo = normalize(-wi);
+                        Vector3f glint = curInter.material->evalGlint(
+                            wo, lightDir, curN,
+                            curInter.tcoords,
+                            curInter.coords,
+                            curInter.material->roughness  // roughness — smaller = sharper, rarer glints
+                        );
+                        Vector3f gc = Li * glint * lightInter.material->m_emission
+                                        * cosLight / (pdf * dist2);
+                        gc.x = std::min(gc.x, 10.f);
+                        gc.y = std::min(gc.y, 10.f);
+                        gc.z = std::min(gc.z, 10.f);
+                        Lo += gc;
+                    }
                 } 
+
+                
 
                 // Caustic lookup — add after the existing direct light contribution
                 if (causticMap.built) {
@@ -172,7 +193,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                             caustic   += ph->power * w;
                         }
                         // Scale by 1/area and surface BRDF
-                        caustic = caustic * getColor(curInter) / area * 3.f;
+                        caustic = caustic * getColor(curInter) / area * 0.5f;
                         caustic.x = std::min(caustic.x, 10.f);
                         caustic.y = std::min(caustic.y, 10.f);
                         caustic.z = std::min(caustic.z, 10.f);
