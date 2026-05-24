@@ -109,5 +109,7 @@ inline Vector3f wavelengthToRGBGaussian(float lambda_nm) {
         g /= sum;
         b /= sum;
     }
+
+    r *= 2.5f; g *= 2.5f; b *= 2.5f;
     return Vector3f(r, g, b);
 }

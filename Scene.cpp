@@ -155,12 +155,41 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                     contrib.x = std::min(contrib.x, 5.0f), contrib.y = std::min(contrib.y, 5.0f), contrib.z = std::min(contrib.z, 5.0f);
                     Lo += contrib;
                 } 
-                if (std::abs(curInter.normal.x) > 0.9f) b1 = normalize(Vector3f(0, 1, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(0, 1, 0)));
-                else b1 = normalize(Vector3f(1, 0, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(1, 0, 0))); 
+
+                // Caustic lookup — add after the existing direct light contribution
+                if (causticMap.built) {
+                    std::vector<const Photon*> nearby;
+                    float radius = 10.f; // tune: larger = smoother, smaller = sharper
+                    causticMap.query(curInter.coords, radius, 200, nearby);
+
+                    if (!nearby.empty()) {
+                        Vector3f caustic(0);
+                        float area = M_PI * radius * radius;
+                        for (const Photon* ph : nearby) {
+                            // Cone filter — weights photons closer to centre more
+                            float dist = (ph->position - curInter.coords).norm();
+                            float w    = std::max(0.f, 1.f - dist / radius);
+                            caustic   += ph->power * w;
+                        }
+                        // Scale by 1/area and surface BRDF
+                        caustic = caustic * getColor(curInter) / area * 3.f;
+                        caustic.x = std::min(caustic.x, 10.f);
+                        caustic.y = std::min(caustic.y, 10.f);
+                        caustic.z = std::min(caustic.z, 10.f);
+                        Lo += caustic;
+                    }
+                }
+
+                if (std::abs(curInter.normal.x) > 0.9f) 
+                    b1 = normalize(Vector3f(0, 1, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(0, 1, 0)));
+                else 
+                    b1 = normalize(Vector3f(1, 0, 0) - curInter.normal * dotProduct(curInter.normal, Vector3f(1, 0, 0))); 
                 b2 = crossProduct(curInter.normal, b1);
+
                 float r1 = get_random_float(), r2 = get_random_float();
                 float phi = 2 * M_PI * r2, sinTheta = std::sqrt(1 - r1 * r1);
                 Vector3f localDir = Vector3f(cos(phi) * sinTheta, sinTheta * sin(phi), r1);
+
                 wi = normalize(b1 * localDir.x + b2 * localDir.y + curInter.normal * localDir.z);
                 curInter = intersect(Ray(curInter.coords + curInter.normal * EPSILON, wi));
                 if (!curInter.happened) break; 
@@ -298,4 +327,113 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
     }
 
     return hitColor;
+}
+
+
+void Scene::buildPhotonMap(int numPhotons) {
+    int stored = 0;
+    int attempts = 0;
+    Vector3f diamondCenter(350, 0, 250); // match your main.cpp
+
+    while (stored < numPhotons && attempts < numPhotons * 20) {
+        attempts++;
+
+        // Sample point on light
+        Intersection lightPos; float lightPdf;
+        sampleLight(lightPos, lightPdf);
+        if (!lightPos.happened) continue;
+
+        // Random wavelength
+        float lambda = 400.f + get_random_float() * 300.f;
+
+        // AIM toward diamond with a cone spread instead of random hemisphere
+        // This is the key fix — random hemisphere misses the diamond almost always
+        Vector3f towardDiamond = normalize(diamondCenter - lightPos.coords);
+        float spread = 0.15f; // cone half-angle in radians roughly
+        Vector3f right, up;
+        if (std::fabs(towardDiamond.x) > std::fabs(towardDiamond.y))
+            right = normalize(crossProduct(towardDiamond, Vector3f(0,1,0)));
+        else
+            right = normalize(crossProduct(towardDiamond, Vector3f(1,0,0)));
+        up = crossProduct(right, towardDiamond);
+
+        float r1 = get_random_float(), r2 = get_random_float();
+        float angle = spread * std::sqrt(r1);
+        float phi   = 2.f * M_PI * r2;
+        Vector3f dir = normalize(
+            towardDiamond
+            + right * (std::cos(phi) * angle)
+            + up    * (std::sin(phi) * angle)
+        );
+
+        // Photon power — scale up to compensate for targeted sampling
+        float lightArea = 0;
+        for (auto obj : objects)
+            if (obj->hasEmit()) lightArea += obj->getArea();
+        Vector3f power = lightPos.material->m_emission * lightArea / (float)numPhotons;
+
+        Ray photonRay(lightPos.coords + dir * EPSILON, dir);
+        bool hitGlass = false;
+
+        for (int bounce = 0; bounce < 10; bounce++) {
+            Intersection hit = intersect(photonRay);
+            if (!hit.happened) break;
+            if (hit.material->m_type == EMIT)   break;
+            if (hit.material->m_type == MIRROR) break; // skip mirror entirely
+
+            if (hit.material->m_type == GLASS) {
+                float ior = hit.material->iorAtLambda(lambda);
+                float kr  = fresnel(photonRay.direction, hit.normal, ior);
+                Vector3f faceN = dotProduct(photonRay.direction, hit.normal) < 0
+                               ? hit.normal : -hit.normal;
+                Vector3f newDir;
+                if (get_random_float() < kr)
+                    newDir = normalize(reflect(photonRay.direction, faceN));
+                else {
+                    newDir   = normalize(refract(photonRay.direction, faceN, ior));
+                    hitGlass = true;
+                }
+                photonRay = Ray(hit.coords + newDir * EPSILON, newDir);
+                continue;
+            }
+
+            // Diffuse hit
+            if (hitGlass) {
+                float r = expf(-0.5f * powf((lambda - 650.f) / 50.f, 2.f));
+                float g = expf(-0.5f * powf((lambda - 550.f) / 50.f, 2.f));
+                float b = expf(-0.5f * powf((lambda - 450.f) / 50.f, 2.f));
+                float s = r + g + b;
+                if (s > 1e-4f) { r /= s; g /= s; b /= s; }
+
+                Photon p;
+                p.position  = hit.coords;
+                p.direction = photonRay.direction;
+                p.lambda    = lambda;
+                p.power     = power * Vector3f(r, g, b);
+                causticMap.store(p);
+                stored++;
+                break;
+            }
+
+            // Non-caustic diffuse — bounce
+            if (get_random_float() > RussianRoulette) break;
+            power = power * hit.material->m_color / RussianRoulette;
+            float r1b = get_random_float(), r2b = get_random_float();
+            float phib = 2.f * M_PI * r2b;
+            float sT = std::sqrt(r1b);
+            Vector3f ld(sT*std::cos(phib), sT*std::sin(phib),
+                        std::sqrt(std::max(0.f, 1.f - r1b)));
+            Vector3f Nb = hit.normal, Bb, Cb;
+            if (std::fabs(Nb.x) > std::fabs(Nb.y))
+                Cb = normalize(Vector3f(Nb.z, 0.f, -Nb.x));
+            else
+                Cb = normalize(Vector3f(0.f, Nb.z, -Nb.y));
+            Bb = crossProduct(Cb, Nb);
+            Vector3f nd = normalize(Bb*ld.x + Cb*ld.y + Nb*ld.z);
+            photonRay = Ray(hit.coords + nd * EPSILON, nd);
+        }
+    }
+
+    printf("Photon map: %d stored, %d attempts\n", stored, attempts);
+    causticMap.build();
 }

@@ -11,6 +11,7 @@
 #include "BVH.hpp"
 #include "Ray.hpp"
 #include "SpectralSample.hpp"
+#include "PhotonMap.hpp"
 
 
 class Scene
@@ -28,6 +29,9 @@ public:
     Vector3f cameraPos = Vector3f(278, 273, -800);
     Vector3f cameraLookAt = Vector3f(278, 273, 0);
     float fov = 40.0f;
+
+    PhotonMap causticMap;
+    void buildPhotonMap(int numPhotons); 
 
 
     // change the spp value to change sample ammount

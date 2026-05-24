@@ -24,8 +24,8 @@ int main(int argc, char** argv)
     // Vector3f cameraPos(278, 273, -800);
     Vector3f diamondPos(350, 0, 250);
     float diamondRotX = -12.0f;
-    float diamondRotY = 25.0f;
-    float diamondRotZ = 18.0f;
+    float diamondRotZ = 35.0f;
+    float diamondRotY = 180.0f;
 
     // bool enableShadows = true;
     int numLights = 2;
@@ -33,7 +33,7 @@ int main(int argc, char** argv)
     Vector3f lightBackPos(0, -5, -500);
     // float lightSize = 1.0f;
 
-    std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";;
+    std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";
     std::string rockNormalPath = "../models/rock/rock_normals.jpg";
 
     std::string envMap = "none";
@@ -148,6 +148,7 @@ int main(int argc, char** argv)
     }
 
 
+
     // MeshTriangle light_("../models/light/light.obj",Vector3f(0,-5,0), light);
     // MeshTriangle light_back("../models/light/light.obj", Vector3f(0, -5, -500), light);
 
@@ -187,6 +188,7 @@ int main(int argc, char** argv)
     scene.Add(new MeshTriangle(verts, vertIndex, 2,st,mfloor));
 
     scene.buildBVH();
+    scene.buildPhotonMap(500000);
 
     Renderer r;
 
