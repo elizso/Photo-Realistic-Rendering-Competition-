@@ -127,7 +127,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                     if (get_random_float() < kr){
                         wi = normalize(reflect(wi, faceN));
                     } else {
-                        if (!sw.SecondaryTerminated()) {
+                        if (heroSampleEnabled && !sw.SecondaryTerminated()) {
                             sw.TerminateSecondary();
                             Li = Li * wavelengthToRGBGaussian(sw.lambda[0]);
                         }
@@ -158,7 +158,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                     contrib.x = std::min(contrib.x, 5.0f), contrib.y = std::min(contrib.y, 5.0f), contrib.z = std::min(contrib.z, 5.0f);
                     Lo += contrib;
 
-                    if (curInter.material->m_type == GLINT) {
+                    if (curInter.material->m_type == GLINT && glintEnabled) {
                         Vector3f wo = normalize(-wi);
                         Vector3f glint; 
 

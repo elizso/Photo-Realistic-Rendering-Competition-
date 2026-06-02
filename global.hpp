@@ -13,6 +13,9 @@ extern const float  EPSILON;
 extern float TASK_N;
 extern bool waveGlint; 
 extern bool photonMapEnabled; 
+extern bool glintEnabled; 
+extern bool heroSampleEnabled;
+
 const float kInfinity = std::numeric_limits<float>::max();
 
 inline float clamp(const float &lo, const float &hi, const float &v)
