@@ -153,7 +153,7 @@ public:
     
 
     // In Material.hpp — add glint evaluation
-    Vector3f evalGlint(const Vector3f& wo,
+    Vector3f evalGlintGeometric(const Vector3f& wo,
                    const Vector3f& wi,
                    const Vector3f& N,
                    const Vector2f& uv,
@@ -179,6 +179,45 @@ public:
 
         return color * highlight;
     }
+
+    // add glint evaluation with wave optics instead
+    Vector3f evalGlintWave(const Vector3f& wo,
+                   const Vector3f& wi,
+                   const Vector3f& N,
+                   const Vector2f& uv,
+                   const Vector3f& worldPos,
+                   float rough) const {
+
+    float patchSize = 2.f;
+    float seed = std::floor(worldPos.x / patchSize) * 73856093.f
+               + std::floor(worldPos.z / patchSize) * 19349663.f;
+    float r1 = fract(std::sin(seed)        * 43758.5453f);
+    float r2 = fract(std::cos(seed * 1.7f) * 12345.6789f);
+    float r3 = fract(std::sin(seed * 2.3f) * 85734.3921f);
+    float r4 = fract(std::cos(seed * 4.1f) * 67231.9823f);
+
+    if (r1 > 0.5f) return Vector3f(0.f);
+
+    // Random microfacet normal — each patch tilted differently
+    Vector3f T = std::fabs(N.x) > 0.9f
+               ? normalize(crossProduct(N, Vector3f(0,0,1)))
+               : normalize(crossProduct(N, Vector3f(1,0,0)));
+    Vector3f B = crossProduct(N, T);
+    Vector3f microN = normalize(N + T*(r3-0.5f)*0.3f + B*(r4-0.5f)*0.3f);
+
+    // Check if this microfacet reflects toward camera
+    Vector3f H    = normalize(wo + wi);
+    float cosine  = std::max(0.f, dotProduct(microN, H));
+    float highlight = std::pow(cosine, 8.f);
+    if (highlight < 0.01f) return Vector3f(0.f);
+
+    // Spectral colour from wavelength
+    float lambda   = 400.f + r2 * 300.f;
+    Vector3f color = wavelengthToRGBGaussian(lambda) * 8.f;
+
+    return color * highlight;
+}
+
 
 };
 
@@ -260,4 +299,4 @@ Vector3f Material::eval(const Vector3f &dir, const Vector3f &N){
 
 
 
-#endif //RAYTRACING_MATERIAL_H
+#endif // RAYTRACING_MATERIAL_H

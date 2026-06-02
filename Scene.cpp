@@ -160,7 +160,9 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
 
                     if (curInter.material->m_type == GLINT) {
                         Vector3f wo = normalize(-wi);
-                        Vector3f glint = curInter.material->evalGlint(
+
+                        // CHOOSE BETWEEN WAVE OR GEOMETRIC
+                        Vector3f glint = curInter.material->evalGlintWave(
                             wo, lightDir, curN,
                             curInter.tcoords,
                             curInter.coords,
@@ -176,7 +178,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                 } 
 
                 
-
+                // ONLY FOR PHOTON MAP
                 // Caustic lookup — add after the existing direct light contribution
                 if (causticMap.built) {
                     std::vector<const Photon*> nearby;
