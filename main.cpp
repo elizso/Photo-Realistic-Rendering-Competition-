@@ -8,6 +8,8 @@
 #include <sstream>
 
 float TASK_N = 2; // 1.1, 1.2, 1.3, 2
+bool waveGlint = false;
+bool photonMapEnabled = false;
 
 int main(int argc, char** argv)
 {
@@ -15,7 +17,8 @@ int main(int argc, char** argv)
     // 1. Default parameters
     int width = 1024;
     int height = 1024;
-    int spp = 1024;
+    int spp = 256;
+
 
     Vector3f cameraPos(278, 273, -800);
     Vector3f cameraLookAt(278, 273, 0);
@@ -24,14 +27,14 @@ int main(int argc, char** argv)
     // Vector3f cameraPos(278, 273, -800);
     Vector3f diamondPos(350, 0, 250);
     float diamondRotX = -12.0f;
-    float diamondRotZ = 35.0f;
+    float diamondRotZ = 40.0f;
     float diamondRotY = 180.0f;
 
     // bool enableShadows = true;
     int numLights = 2;
     Vector3f lightPos(0, -5, 0);
     Vector3f lightBackPos(0, -5, -500);
-    // float lightSize = 1.0f;
+
 
     std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";
     std::string rockNormalPath = "../models/rock/rock_normals.jpg";
@@ -191,7 +194,8 @@ int main(int argc, char** argv)
     scene.Add(new MeshTriangle(verts, vertIndex, 2,st,glintFloor));
 
     scene.buildBVH();
-    scene.buildPhotonMap(500000);
+
+    if (photonMapEnabled) scene.buildPhotonMap(500000);
 
     Renderer r;
 

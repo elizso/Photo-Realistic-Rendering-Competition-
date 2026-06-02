@@ -160,14 +160,28 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
 
                     if (curInter.material->m_type == GLINT) {
                         Vector3f wo = normalize(-wi);
+                        Vector3f glint; 
 
                         // CHOOSE BETWEEN WAVE OR GEOMETRIC
-                        Vector3f glint = curInter.material->evalGlintWave(
+                        if (waveGlint){
+
+                            glint = curInter.material->evalGlintWave(
                             wo, lightDir, curN,
                             curInter.tcoords,
                             curInter.coords,
                             curInter.material->roughness  // roughness — smaller = sharper, rarer glints
-                        );
+                        );}
+                        else {
+                            glint = curInter.material->evalGlintGeometric(
+                                wo, lightDir, curN,
+                                curInter.tcoords,
+                                curInter.coords,
+                                curInter.material->roughness  // roughness — smaller = sharper, rarer glints
+                            );
+                        }
+                    
+                        
+                        
                         Vector3f gc = Li * glint * lightInter.material->m_emission
                                         * cosLight / (pdf * dist2);
                         gc.x = std::min(gc.x, 10.f);
@@ -180,7 +194,7 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                 
                 // ONLY FOR PHOTON MAP
                 // Caustic lookup — add after the existing direct light contribution
-                if (causticMap.built) {
+                if (photonMapEnabled && causticMap.built) {
                     std::vector<const Photon*> nearby;
                     float radius = 10.f; // tune: larger = smoother, smaller = sharper
                     causticMap.query(curInter.coords, radius, 200, nearby);
