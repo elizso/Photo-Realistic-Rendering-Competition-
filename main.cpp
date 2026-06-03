@@ -13,6 +13,7 @@
 #include <sstream>
 #include <string>
 #include <thread>
+#include <opencv2/opencv.hpp>
 
 // Dear ImGui + GLFW/OpenGL backend
 // This gives the project a lightweight GUI instead of the earlier terminal-only setup.
@@ -104,6 +105,10 @@ struct GuiState {
 
     std::mutex statusMutex;
     std::string status = "Ready.";
+    GLuint renderedTexture = 0;
+    int renderedImageWidth = 0;
+    int renderedImageHeight = 0;
+    bool imageReady = false;
 };
 
 static void setStatus(GuiState& state, const std::string& text) {
@@ -114,6 +119,45 @@ static void setStatus(GuiState& state, const std::string& text) {
 static std::string getStatus(GuiState& state) {
     std::lock_guard<std::mutex> lock(state.statusMutex);
     return state.status;
+}
+
+static bool loadTextureFromFile(const std::string& filename, GLuint& outTexture, int& outWidth, int& outHeight) {
+    cv::Mat image = cv::imread(filename, cv::IMREAD_COLOR);
+
+    if (image.empty()) {
+        return false;
+    }
+
+    cv::cvtColor(image, image, cv::COLOR_BGR2RGBA);
+
+    outWidth = image.cols;
+    outHeight = image.rows;
+
+    if (outTexture != 0) {
+        glDeleteTextures(1, &outTexture);
+    }
+
+    glGenTextures(1, &outTexture);
+    glBindTexture(GL_TEXTURE_2D, outTexture);
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+    glTexImage2D(
+        GL_TEXTURE_2D,
+        0,
+        GL_RGBA,
+        outWidth,
+        outHeight,
+        0,
+        GL_RGBA,
+        GL_UNSIGNED_BYTE,
+        image.data
+    );
+
+    glBindTexture(GL_TEXTURE_2D, 0);
+
+    return true;
 }
 
 // Helper for editing Vector3f values through ImGui.
@@ -436,6 +480,7 @@ static void renderScene(RenderParams params, GuiState& guiState) {
 
     Renderer r;
     r.Render(scene);
+    guiState.imageReady = true;
 
     auto stop = std::chrono::system_clock::now();
 
@@ -567,6 +612,24 @@ static void drawMainGui(RenderParams& params, GuiState& guiState) {
 
     ImGui::TextWrapped("Status: %s", getStatus(guiState).c_str());
 
+    if (ImGui::CollapsingHeader("Rendered Image", ImGuiTreeNodeFlags_DefaultOpen)) {
+    if (guiState.imageReady) {
+        if (loadTextureFromFile("binary_task2.ppm", guiState.renderedTexture, guiState.renderedImageWidth, guiState.renderedImageHeight)) {
+            float previewWidth = ImGui::GetContentRegionAvail().x;
+            float aspect = (float)guiState.renderedImageHeight / (float)guiState.renderedImageWidth;
+
+            ImGui::Image(
+                (ImTextureID)(intptr_t)guiState.renderedTexture,
+                ImVec2(previewWidth, previewWidth * aspect)
+            );
+        } else {
+            ImGui::TextWrapped("Rendered image file not found. Check the renderer output filename.");
+        }
+    } else {
+        ImGui::TextWrapped("No image rendered yet.");
+    }
+}
+
     bool canRender = !guiState.isRendering;
 
     if (!canRender) {
@@ -638,6 +701,35 @@ int main(int argc, char** argv) {
     (void)io;
 
     ImGui::StyleColorsDark();
+    ImGuiStyle& style = ImGui::GetStyle();
+    ImVec4* colors = style.Colors;
+
+    colors[ImGuiCol_WindowBg]        = ImVec4(0.16f, 0.04f, 0.12f, 1.00f); // deep pink
+    colors[ImGuiCol_TitleBg]         = ImVec4(0.45f, 0.10f, 0.32f, 1.00f);
+    colors[ImGuiCol_TitleBgActive]   = ImVec4(0.95f, 0.38f, 0.70f, 1.00f);
+
+    colors[ImGuiCol_Header]          = ImVec4(0.95f, 0.55f, 0.20f, 0.75f); // yellow-orange
+    colors[ImGuiCol_HeaderHovered]   = ImVec4(1.00f, 0.70f, 0.25f, 0.90f);
+    colors[ImGuiCol_HeaderActive]    = ImVec4(1.00f, 0.80f, 0.30f, 1.00f);
+
+    colors[ImGuiCol_Button]          = ImVec4(0.95f, 0.35f, 0.68f, 1.00f); // pink
+    colors[ImGuiCol_ButtonHovered]   = ImVec4(1.00f, 0.55f, 0.78f, 1.00f);
+    colors[ImGuiCol_ButtonActive]    = ImVec4(1.00f, 0.75f, 0.25f, 1.00f); // yellow
+
+    colors[ImGuiCol_FrameBg]         = ImVec4(0.35f, 0.10f, 0.28f, 1.00f);
+    colors[ImGuiCol_FrameBgHovered]  = ImVec4(0.65f, 0.20f, 0.45f, 1.00f);
+    colors[ImGuiCol_FrameBgActive]   = ImVec4(0.95f, 0.55f, 0.20f, 1.00f);
+
+    colors[ImGuiCol_CheckMark]       = ImVec4(1.00f, 0.85f, 0.20f, 1.00f);
+    colors[ImGuiCol_SliderGrab]      = ImVec4(1.00f, 0.75f, 0.25f, 1.00f);
+    colors[ImGuiCol_SliderGrabActive]= ImVec4(1.00f, 0.90f, 0.35f, 1.00f);
+
+    colors[ImGuiCol_Text]            = ImVec4(1.00f, 0.92f, 0.75f, 1.00f); // warm cream
+    colors[ImGuiCol_Separator]       = ImVec4(1.00f, 0.70f, 0.25f, 0.80f);
+
+    style.WindowRounding = 10.0f;
+    style.FrameRounding = 6.0f;
+    style.GrabRounding = 6.0f;
 
     ImGui_ImplGlfw_InitForOpenGL(window, true);
     ImGui_ImplOpenGL3_Init(glslVersion);
