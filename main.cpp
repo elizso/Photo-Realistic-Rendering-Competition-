@@ -81,8 +81,13 @@ struct RenderParams {
     std::string rockTexturePath = "../models/rock/initialShadingGroup_Base_color.png";
     std::string rockNormalPath = "../models/rock/rock_normals.jpg";
 
+    // std::string rockTexturePath = "../models/spot/spot_texture.png";
+    // std::string rockNormalPath = "../models/spot/hmap.jpg";
+
     std::string envMap = "none";
     std::string textureMap = "../models/rock/initialShadingGroup_Base_color.png";
+    // std::string textureMap = "../models/spot/spot_texture.png";
+
 
     bool waveGlint = false;
     bool photonMapEnabled = false;
@@ -671,7 +676,7 @@ int main(int argc, char** argv) {
         return 1;
     }
 
-    const char* glslVersion = "#version 130";
+    const char* glslVersion = "#version 120";
 
     glfwWindowHint(GLFW_VISIBLE, GLFW_TRUE);
     glfwWindowHint(GLFW_FOCUSED, GLFW_TRUE);
