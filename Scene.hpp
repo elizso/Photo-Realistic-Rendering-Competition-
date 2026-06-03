@@ -29,6 +29,7 @@ public:
     Vector3f cameraPos = Vector3f(278, 273, -800);
     Vector3f cameraLookAt = Vector3f(278, 273, 0);
     float fov = 40.0f;
+    bool enableShadows = true;
 
     PhotonMap causticMap;
     void buildPhotonMap(int numPhotons); 
