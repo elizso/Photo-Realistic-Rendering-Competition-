@@ -146,8 +146,13 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                 Vector3f offsetN = dotProduct(curN, lightDir) > 0 ? curN : -curN;
                 Ray shadowRay(curInter.coords + offsetN * EPSILON + lightDir * EPSILON, lightDir);
                 Intersection shadowInter = intersect(shadowRay);
-                bool notBlocked = !shadowInter.happened || shadowInter.material == nullptr || 
-                                shadowInter.tnear >= lightVec.norm() * 0.999f || shadowInter.material -> m_type == EMIT;
+                // bool notBlocked = !shadowInter.happened || shadowInter.material == nullptr || 
+                //                 shadowInter.tnear >= lightVec.norm() * 0.999f || shadowInter.material -> m_type == EMIT;
+                bool notBlocked = !enableShadows ||
+                  !shadowInter.happened ||
+                  shadowInter.material == nullptr ||
+                  shadowInter.tnear >= lightVec.norm() * 0.999f ||
+                  shadowInter.material->m_type == EMIT;
 
                 Li = Li * getColor(curInter);
                 
@@ -289,7 +294,8 @@ Vector3f Scene::castRay(const Ray &ray, int depth, SampledWavelengths &sw) const
                 // 1) If the object hit by the shadow ray is further than the light (minus EPSILON for avoiding the self shadowing)
                 // 2) or if the hit object is the light source itself (EMIT),
                 // the point is considered fully illuminated.
-                if (shadowInter.happened && (distToHit > distToLight - EPSILON || shadowInter.material->m_type == EMIT)) {
+                // if (shadowInter.happened && (distToHit > distToLight - EPSILON || shadowInter.material->m_type == EMIT)) {
+                if (!enableShadows || !shadowInter.happened || distToHit > distToLight - EPSILON || shadowInter.material->m_type == EMIT) {
                     Vector3f L_i = Vector3f(1.0f, 1.0f, 1.0f); // Light intensity(light color is considered as pure white)
                     Vector3f Kd = inter.obj->evalDiffuseColor(st); // Material diffuse color
 
