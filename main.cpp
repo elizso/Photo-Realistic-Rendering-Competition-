@@ -9,9 +9,9 @@
 
 float TASK_N = 2; // 1.1, 1.2, 1.3, 2
 bool waveGlint = false;
-bool photonMapEnabled = false;
-bool glintEnabled = false;
-bool heroSampleEnabled = false;
+bool photonMapEnabled = true;
+bool glintEnabled = true;
+bool heroSampleEnabled = true;
 
 int main(int argc, char** argv)
 {
