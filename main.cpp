@@ -24,9 +24,9 @@
 
 float TASK_N = 2; // 1.1, 1.2, 1.3, 2
 bool waveGlint = false;
-bool photonMapEnabled = false;
-bool glintEnabled = false;
-bool heroSampleEnabled = false;
+bool photonMapEnabled = true;
+bool glintEnabled = true;
+bool heroSampleEnabled = true;
 
 // Object currently selected in the GUI.
 // These correspond to the scene elements that can be adjusted interactively.
